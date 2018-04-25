@@ -6,6 +6,7 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
+	"github.com/shunfei/cronsun/conf"
 	"github.com/shunfei/cronsun/log"
 )
 
@@ -22,12 +23,15 @@ type JobLog struct {
 	JobGroup  string        `bson:"jobGroup" json:"jobGroup"`         // 任务分组，配合 Id 跳转用
 	User      string        `bson:"user" json:"user"`                 // 执行此次任务的用户
 	Name      string        `bson:"name" json:"name"`                 // 任务名称
-	Node      string        `bson:"node" json:"node"`                 // 运行此次任务的节点 ip，索引
+	Node      string        `bson:"node" json:"node"`                 // 运行此次任务的节点 id，索引
+	Hostname  string        `bson:"hostname" json:"hostname"`         // 运行此次任务的节点主机名称，索引
+	IP        string        `bson:"ip" json:"ip"`                     // 运行此次任务的节点主机IP，索引
 	Command   string        `bson:"command" json:"command,omitempty"` // 执行的命令，包括参数
 	Output    string        `bson:"output" json:"output,omitempty"`   // 任务输出的所有内容
 	Success   bool          `bson:"success" json:"success"`           // 是否执行成功
 	BeginTime time.Time     `bson:"beginTime" json:"beginTime"`       // 任务开始执行时间，精确到毫秒，索引
 	EndTime   time.Time     `bson:"endTime" json:"endTime"`           // 任务执行完毕时间，精确到毫秒
+	Cleanup   time.Time     `bson:"cleanup,omitempty" json:"-"`       // 日志清除时间标志
 }
 
 type JobLatestLog struct {
@@ -93,7 +97,9 @@ func CreateJobLog(j *Job, t time.Time, rs string, success bool) {
 		Name:     j.Name,
 		User:     j.User,
 
-		Node: j.runOn,
+		Node:     j.runOn,
+		Hostname: j.hostname,
+		IP:       j.ip,
 
 		Command: j.Command,
 		Output:  rs,
@@ -102,6 +108,17 @@ func CreateJobLog(j *Job, t time.Time, rs string, success bool) {
 		BeginTime: t,
 		EndTime:   et,
 	}
+
+	if conf.Config.Web.LogCleaner.EveryMinute > 0 {
+		var expiration int
+		if j.LogExpiration > 0 {
+			expiration = j.LogExpiration
+		} else {
+			expiration = conf.Config.Web.LogCleaner.ExpirationDays
+		}
+		jl.Cleanup = jl.EndTime.Add(time.Duration(expiration) * time.Hour * 24)
+	}
+
 	if err := mgoDB.Insert(Coll_JobLog, jl); err != nil {
 		log.Errorf(err.Error())
 	}
@@ -111,7 +128,7 @@ func CreateJobLog(j *Job, t time.Time, rs string, success bool) {
 		JobLog:   jl,
 	}
 	latestLog.Id = ""
-	if err := mgoDB.Upsert(Coll_JobLatestLog, bson.M{"node": jl.Node, "jobId": jl.JobId, "jobGroup": jl.JobGroup}, latestLog); err != nil {
+	if err := mgoDB.Upsert(Coll_JobLatestLog, bson.M{"node": jl.Node, "hostname": jl.Hostname, "ip": jl.IP, "jobId": jl.JobId, "jobGroup": jl.JobGroup}, latestLog); err != nil {
 		log.Errorf(err.Error())
 	}
 
@@ -133,9 +150,10 @@ func CreateJobLog(j *Job, t time.Time, rs string, success bool) {
 }
 
 type StatExecuted struct {
-	Total     int64 `bson:"total" json:"total"`
-	Successed int64 `bson:"successed" json:"successed"`
-	Failed    int64 `bson:"failed" json:"failed"`
+	Total     int64  `bson:"total" json:"total"`
+	Successed int64  `bson:"successed" json:"successed"`
+	Failed    int64  `bson:"failed" json:"failed"`
+	Date      string `bson:"date" json:"date"`
 }
 
 func JobLogStat() (s *StatExecuted, err error) {
@@ -143,7 +161,21 @@ func JobLogStat() (s *StatExecuted, err error) {
 	return
 }
 
-func JobLogDayStat(day time.Time) (s *StatExecuted, err error) {
-	err = mgoDB.FindOne(Coll_Stat, bson.M{"name": "job-day", "date": day.Format("2006-01-02")}, &s)
+func JobLogDailyStat(begin, end time.Time) (ls []*StatExecuted, err error) {
+	const oneDay = time.Hour * 24
+	err = mgoDB.WithC(Coll_Stat, func(c *mgo.Collection) error {
+		dateList := make([]string, 0, 8)
+
+		cur := begin
+		for {
+			dateList = append(dateList, cur.Format("2006-01-02"))
+			cur = cur.Add(oneDay)
+			if cur.After(end) {
+				break
+			}
+		}
+		return c.Find(bson.M{"name": "job-day", "date": bson.M{"$in": dateList}}).Sort("date").All(&ls)
+	})
+
 	return
 }

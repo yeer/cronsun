@@ -14,12 +14,12 @@
         <input type="text" ref="ids" v-model:value="ids" :placeholder="$L('multiple IDs can separated by commas')"/>
       </div>
       <div class="field">
-        <label>{{$L('select group')}}</label>
-        <Dropdown :title="$L('select group')" v-bind:items="prefetchs.groups" v-on:change="changeGroup" :selected="groups" :multiple="true"/>
+        <label>{{$L('select groups')}}</label>
+        <Dropdown :title="$L('select groups')" v-bind:items="prefetchs.groups" v-on:change="changeGroup" :selected="groups" :multiple="true"/>
       </div>
       <div class="field">
         <label>{{$L('select nodes')}}</label>
-        <Dropdown :title="$L('select nodes')" v-bind:items="prefetchs.nodes" v-on:change="changeNodes" :selected="nodes" :multiple="true"/>
+        <Dropdown :title="$L('select nodes')" v-bind:items="$store.getters.dropdownNodes" v-on:change="changeNodes" :selected="nodes" :multiple="true"/>
       </div>
       <div class="field">
         <button class="fluid ui button" type="button" v-on:click="submit">{{$L('submit query')}}</button>
@@ -39,7 +39,7 @@
         <tr v-for="(proc, index) in executings">
           <td class="center aligned"><router-link :to="'/job/edit/'+proc.group+'/'+proc.jobId">{{proc.jobId}}</router-link></td>
           <td class="center aligned">{{proc.group}}</td>
-          <td class="center aligned">{{proc.nodeId}}</td>
+          <td class="center aligned">{{$store.getters.hostshows(proc.nodeId)}}</td>
           <td class="center aligned">{{proc.id}}</td>
           <td class="center aligned">{{proc.time}}</td>
         </tr>
@@ -56,7 +56,7 @@ export default {
   name: 'job-executing',
   data(){
     return {
-      prefetchs: {groups: [], nodes: []},
+      prefetchs: {groups: []},
       loading: false,
       groups: [],
       ids: '',
@@ -75,12 +75,6 @@ export default {
       !resp.includes('default') && resp.unshift('default');
       vm.prefetchs.groups = resp;
       this.fetchList(this.buildQuery());
-    }).do();
-
-    this.$rest.GET('nodes').onsucceed(200, (resp)=>{
-      for (var i in resp) {
-        vm.prefetchs.nodes.push(resp[i].id);
-      }
     }).do();
   },
 

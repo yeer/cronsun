@@ -2,6 +2,7 @@ package cronsun
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os/exec"
@@ -13,10 +14,7 @@ import (
 	"syscall"
 	"time"
 
-	"golang.org/x/net/context"
-
 	client "github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/mvcc/mvccpb"
 
 	"github.com/shunfei/cronsun/conf"
 	"github.com/shunfei/cronsun/log"
@@ -65,9 +63,13 @@ type Job struct {
 	FailNotify bool `json:"fail_notify"`
 	// 发送通知地址
 	To []string `json:"to"`
+	// 单独对任务指定日志清除时间
+	LogExpiration int `json:"log_expiration"`
 
 	// 执行任务的结点，用于记录 job log
-	runOn string
+	runOn    string
+	hostname string
+	ip       string
 	// 用于存储分隔后的任务
 	cmd []string
 	// 控制同时执行任务数
@@ -118,8 +120,8 @@ func (l *locker) unlock() {
 
 	close(l.done)
 	l.timer.Stop()
-	if _, err := DefalutClient.KeepAliveOnce(l.lID); err != nil {
-		log.Warnf("unlock keep alive err: %s", err.Error())
+	if _, err := DefalutClient.Revoke(l.lID); err != nil {
+		log.Warnf("unlock revoke err: %s", err.Error())
 	}
 }
 
@@ -185,9 +187,9 @@ func (j *Job) unlimit() {
 	atomic.AddInt64(j.Count, -1)
 }
 
-func (j *Job) Init(n string) {
+func (j *Job) Init(nodeID, hostname, ip string) {
 	var c int64
-	j.Count, j.runOn = &c, n
+	j.Count, j.runOn, j.hostname, j.ip = &c, nodeID, hostname, ip
 }
 
 func (c *Cmd) lockTtl() int64 {
@@ -270,14 +272,14 @@ func (c *Cmd) lock() *locker {
 }
 
 // 优先取结点里的值，更新 group 时可用 gid 判断是否对 job 进行处理
-func (j *JobRule) included(nid string, gs map[string]*Group) bool {
-	for i, count := 0, len(j.NodeIDs); i < count; i++ {
-		if nid == j.NodeIDs[i] {
+func (rule *JobRule) included(nid string, gs map[string]*Group) bool {
+	for i, count := 0, len(rule.NodeIDs); i < count; i++ {
+		if nid == rule.NodeIDs[i] {
 			return true
 		}
 	}
 
-	for _, gid := range j.GroupIDs {
+	for _, gid := range rule.GroupIDs {
 		if g, ok := gs[gid]; ok && g.Included(nid) {
 			return true
 		}
@@ -287,25 +289,26 @@ func (j *JobRule) included(nid string, gs map[string]*Group) bool {
 }
 
 // 验证 timer 字段
-func (j *JobRule) Valid() error {
+func (rule *JobRule) Valid() error {
 	// 注意 interface nil 的比较
-	if j.Schedule != nil {
+	if rule.Schedule != nil {
 		return nil
 	}
 
-	if len(j.Timer) == 0 {
+	if len(rule.Timer) == 0 {
 		return ErrNilRule
 	}
 
-	sch, err := cron.Parse(j.Timer)
+	sch, err := cron.Parse(rule.Timer)
 	if err != nil {
-		return fmt.Errorf("invalid JobRule[%s], parse err: %s", j.Timer, err.Error())
+		return fmt.Errorf("invalid JobRule[%s], parse err: %s", rule.Timer, err.Error())
 	}
 
-	j.Schedule = sch
+	rule.Schedule = sch
 	return nil
 }
 
+// Note: this function did't check the job.
 func GetJob(group, id string) (job *Job, err error) {
 	job, _, err = GetJobAndRev(group, id)
 	return
@@ -369,10 +372,10 @@ func WatchJobs() client.WatchChan {
 	return DefalutClient.Watch(conf.Config.Cmd, client.WithPrefix())
 }
 
-func GetJobFromKv(kv *mvccpb.KeyValue) (job *Job, err error) {
+func GetJobFromKv(key, value []byte) (job *Job, err error) {
 	job = new(Job)
-	if err = json.Unmarshal(kv.Value, job); err != nil {
-		err = fmt.Errorf("job[%s] umarshal err: %s", string(kv.Key), err.Error())
+	if err = json.Unmarshal(value, job); err != nil {
+		err = fmt.Errorf("job[%s] umarshal err: %s", string(key), err.Error())
 		return
 	}
 
@@ -526,6 +529,10 @@ func (j *Job) Check() error {
 		return ErrIllegalJobGroupName
 	}
 
+	if j.LogExpiration < 0 {
+		j.LogExpiration = 0
+	}
+
 	j.User = strings.TrimSpace(j.User)
 
 	for i := range j.Rules {
@@ -559,15 +566,15 @@ func (j *Job) Notify(t time.Time, msg string) {
 	}
 
 	ts := t.Format(time.RFC3339)
-	body := "job: " + j.Key() + "\n" +
-		"job name: " + j.Name + "\n" +
-		"job cmd: " + j.Command + "\n" +
-		"node: " + j.runOn + "\n" +
-		"time: " + ts + "\n" +
-		"err: " + msg
+	body := "Job: " + j.Key() + "\n" +
+		"Job name: " + j.Name + "\n" +
+		"Job cmd: " + j.Command + "\n" +
+		"Node: " + j.hostname + "|" + j.ip + "[" + j.runOn + "]\n" +
+		"Time: " + ts + "\n" +
+		"Error: " + msg
 
 	m := Message{
-		Subject: "node[" + j.runOn + "] job[" + j.ShortName() + "] time[" + ts + "] exec failed",
+		Subject: "[Cronsun] node[" + j.hostname + "|" + j.ip + "] job[" + j.ShortName() + "] time[" + ts + "] exec failed",
 		Body:    body,
 		To:      j.To,
 	}
@@ -601,10 +608,16 @@ func (j *Job) Cmds(nid string, gs map[string]*Group) (cmds map[string]*Cmd) {
 		return
 	}
 
+LOOP_TIMER_CMD:
 	for _, r := range j.Rules {
 		for _, id := range r.ExcludeNodeIDs {
 			if nid == id {
-				continue
+				// 在当前定时器规则中，任务不会在该节点执行（节点被排除）
+				// 但是任务可以在其它定时器中，在该节点被执行
+				// 比如，一个定时器设置在凌晨 1 点执行，但是此时不想在这个节点执行，然后，
+				// 同时又设置一个定时器在凌晨 2 点执行，这次这个任务由于某些原因，必须在当前节点执行
+				// 下面的 LOOP_TIMER 标签，原因同上
+				continue LOOP_TIMER_CMD
 			}
 		}
 
@@ -621,10 +634,11 @@ func (j *Job) Cmds(nid string, gs map[string]*Group) (cmds map[string]*Cmd) {
 }
 
 func (j Job) IsRunOn(nid string, gs map[string]*Group) bool {
+LOOP_TIMER:
 	for _, r := range j.Rules {
 		for _, id := range r.ExcludeNodeIDs {
 			if nid == id {
-				continue
+				continue LOOP_TIMER
 			}
 		}
 

@@ -22,20 +22,17 @@ var language = {
   'account': '账号',
   'total number of jobs': '任务总数',
   'total number of executeds': '执行任务总次数',
-  'total number of executeds(today)': '执行任务总次数（今天）',
   'total number of nodes': '节点总数',
-  '{n} online': '在线 {0}',
-  '{n} offline': '离线 {0}',
-  '{n} damaged': '故障 {0}',
-  '{n} successed': '成功 {0}',
-  '{n} failed': '失败 {0}',
-  'node stat': '节点概况',
-  'executed stat(today)': '执行概况（今天）',
+  'job executed in past 7 days': '过去 7 天任务统计',
+  'node show as': '节点显示为',
+  'hostname': '主机名称',
 
+  'batch': '批量',
   'job name': '任务名称',
   'multiple names can separated by commas': '多个名称用英文逗号分隔',
   'job ID': '任务 ID',
   'multiple IDs can separated by commas': '多个 ID 用英文逗号分隔',
+  'multiple Hostnames can separated by commas': '多个主机名称用英文逗号分隔',
   'multiple IPs can separated by commas': '多个 IP 用英文逗号分隔',
   'starting date': '起始日期',
   'end date': '截至日期',
@@ -83,6 +80,7 @@ var language = {
   'spend time': '耗时',
   'result': '结果',
   'loading configurations': '正在加载配置',
+  'log has been deleted': '日志已经被删除',
 
   'job type': '任务类型',
   'common job': '普通任务',
@@ -104,7 +102,9 @@ var language = {
   'retry interval(in seconds)': '失败重试间隔时间（秒）',
   'parallel number in one node(0 for no limits)': '一个节点上面该任务并行数（0 表示不限制）',
   'timeout(in seconds, 0 for no limits)': '超时设置（单位“秒”，0 表示不限制）',
-  '<sec> <min> <hr> <day> <month> <week>, rule is same with Cron': '<秒> <分> <时> <日> <月> <周>，规则与 Cron 一样',
+  'log expiration(log expired after N days, 0 will use default setting: {n} days)': '日志过期（日志保存天数，0 表示使用默认设置：{0} 天）',
+  '0 * * * * *, rules see the 「?」on the right': '0 * * * * *, 规则参考右边的「?」',
+  '<sec> <min> <hr> <day> <month> <week>, rules is same with Cron': '<秒> <分> <时> <日> <月> <周>，规则与 Cron 一样',
   'and please running on those nodes': '同时在这些节点上面运行',
   'do not running on those nodes': '不要在这些节点上面运行',
   'the job dose not have a timer currently, please click the button below to add a timer': '当前任务没有定时器，点击下面按钮来添加定时器',
@@ -132,7 +132,8 @@ var language = {
   'select nodes': '选择节点',
   'select groups': '选择分组',
   'are you sure to delete the group {name}?': '确定删除分组 {0}?',
-  'are you sure to remove the node {nodeId}?': '确定删除节点 {0}?'
+  'are you sure to remove the node {nodeId}?': '确定删除节点 {0}?',
+  'node not found, was it removed?': '不存在的节点，被删除了吗？'
 }
 
 export default language;

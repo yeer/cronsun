@@ -4,8 +4,8 @@
   <div class="two fields">
     <div class="field">
       <div class="ui icon input">
-        <input type="text" v-bind:value="rule.timer" v-on:input="change('timer', $event.target.value)" placeholder="定时 * 5 * * * *"/>
-        <i ref="ruletip" class="large help circle link icon" data-position="top right" :data-content="$L('<sec> <min> <hr> <day> <month> <week>, rule is same with Cron')" data-variation="wide"></i>
+        <input type="text" v-bind:value="rule.timer" v-on:input="change('timer', $event.target.value)" :placeholder="$L('0 * * * * *, rules see the 「?」on the right')"/>
+        <i ref="ruletip" class="large help circle link icon" data-position="top right" :data-content="$L('<sec> <min> <hr> <day> <month> <week>, rules is same with Cron')" data-variation="wide"></i>
       </div>
     </div>
     <div class="field">
@@ -38,12 +38,7 @@ export default {
 
   mounted: function(){
     var vm = this;
-    this.$rest.GET('nodes').onsucceed(200, (resp)=>{
-      for (var i in resp) {
-        vm.activityNodes.push(resp[i].id);
-      }
-    }).do();
-
+    this.activityNodes = this.$store.getters.dropdownNodes;
 
     this.$rest.GET('node/groups').onsucceed(200, (resp)=>{
       var groups = [];

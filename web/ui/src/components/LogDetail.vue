@@ -17,7 +17,7 @@
       </div>
       <div class="ui segment">
         <p>
-          <span class="title">{{$L('node')}}</span> {{log.node}}
+          <span class="title">{{$L('node')}}</span> {{log.hostname}}
         </p>
       </div>
       <div class="ui segment">
@@ -43,7 +43,7 @@
     <h4 class="ui header">{{$L('command')}}</h4>
     <pre class="ui grey inverted segment">{{log.command}}</pre>
     <h4 class="ui header">{{$L('output')}}</h4>
-    <pre class="ui inverted segment">{{log.output}}</pre>
+    <pre class="ui inverted segment">{{printResult}}</pre>
   </div>
 </template>
 
@@ -53,14 +53,14 @@ export default {
   data: function(){
       return {
         log: {
-          id: 'sdfas',
-          jobId: 'wewe',
-          jobGroup: 'test',
-          name:  'run run run',
-          node:  '192.168.1.2',
+          id: '',
+          jobId: '',
+          jobGroup: '',
+          name:  '',
+          node:  '',
           user:  '',
-          command: 'echo hello;',
-          output: 'hello',
+          command: '',
+          output: '',
           exitCode: 0,
           beginTime: new Date(),
           endTime: new Date()
@@ -69,11 +69,36 @@ export default {
       }
   },
 
+  computed: {
+    printResult(){
+      return this.log.output ? this.log.output.replace("\r\n", "^M\r\n") : '';
+    }
+  },
+
   mounted: function(){
     var vm = this;
     this.$rest.GET('log/'+this.$route.params.id).
-        onsucceed(200, (resp)=>{vm.log = resp}).
-        onfailed((data)=>{vm.error = data}).
+        onsucceed(200, (resp)=>{
+          var node = vm.$store.getters.getNodeByID(resp.node);
+          if (!node) {
+            resp.hostname = resp.node + ' (Node not found)'
+          } else {
+            if (!node.ip) {
+              resp.hostname = node.id + ' (Need to upgrade)';
+            } else {
+              resp.hostname = node.hostname + ' [' + node.ip + ']';
+            }
+          }
+
+          vm.log = resp;
+        }).
+        onfailed((data, xhr) => {
+          if (xhr.status === 404) {
+            vm.error = vm.$L('log has been deleted')
+          } else {
+            vm.error = data
+          }
+        }).
         do();
   }
 }
