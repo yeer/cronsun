@@ -1,9 +1,0 @@
-{
-    "open": false,
-    "users": [
-        "www", "db"
-    ],
-    "ext": [
-        ".sh", ".py"
-    ]
-}

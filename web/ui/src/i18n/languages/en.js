@@ -131,7 +131,8 @@ var language = {
   'select groups': 'Select groups',
   'are you sure to delete the group {name}?': 'Are you sure to delete the group {0}?',
   'are you sure to remove the node {nodeId}?': 'Are you sure to remove the node {0}?',
-  'node not found, was it removed?': 'Node not found, was it removed?'
+  'node not found, was it removed?': 'Node not found, was it removed?',
+  'show cmd': 'show cmd'
 }
 
 export default language;

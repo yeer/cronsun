@@ -53,13 +53,13 @@
 
 ### 安装
 
-直接下载执行文件 [latest release](https://github.com/shunfei/cronsun/releases/latest)。
+直接下载执行文件 [latest release](https://github.com/yeer/cronsun/releases/latest)。
 
 如果你熟悉 `Go`，也可以从源码编译, 要求 `go >= 1.9+`
 
 ```
-go get -u github.com/shunfei/cronsun
-cd $GOPATH/src/github.com/shunfei/cronsun
+go get -u github.com/yeer/cronsun
+cd $GOPATH/src/github.com/yeer/cronsun
 sh build.sh
 ```
 
@@ -73,7 +73,7 @@ sh build.sh
 
 ### 关于后台权限
 
-当前实现了一个可选的简单登录认证和帐号管理的功能（首次启用之后默认管理员的邮箱密码是 admin@admin.com/admin），没有详细的权限管理功能。登录控制也可以考虑使用 [aproxy](https://github.com/shunfei/aproxy) ，相关介绍见 [aProxy: 带认证授权和权限控制的反向代理](http://www.cnblogs.com/QLeelulu/p/aproxy.html)。
+当前实现了一个可选的简单登录认证和帐号管理的功能（首次启用之后默认管理员的邮箱密码是 admin@admin.com/admin），没有详细的权限管理功能。登录控制也可以考虑使用 [aproxy](https://github.com/yeer/aproxy) ，相关介绍见 [aProxy: 带认证授权和权限控制的反向代理](http://www.cnblogs.com/QLeelulu/p/aproxy.html)。
 
 ## 截图
 

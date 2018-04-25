@@ -13,10 +13,10 @@ import (
 	"github.com/go-gomail/gomail"
 	"github.com/satori/go.uuid"
 
-	"github.com/shunfei/cronsun/db"
-	"github.com/shunfei/cronsun/event"
-	"github.com/shunfei/cronsun/log"
-	"github.com/shunfei/cronsun/utils"
+	"github.com/yeer/cronsun/db"
+	"github.com/yeer/cronsun/event"
+	"github.com/yeer/cronsun/log"
+	"github.com/yeer/cronsun/utils"
 )
 
 var (

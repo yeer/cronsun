@@ -133,7 +133,8 @@ var language = {
   'select groups': '选择分组',
   'are you sure to delete the group {name}?': '确定删除分组 {0}?',
   'are you sure to remove the node {nodeId}?': '确定删除节点 {0}?',
-  'node not found, was it removed?': '不存在的节点，被删除了吗？'
+  'node not found, was it removed?': '不存在的节点，被删除了吗？',
+  'show cmd': '显示命令'
 }
 
 export default language;

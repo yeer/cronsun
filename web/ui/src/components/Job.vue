@@ -8,6 +8,7 @@
       <router-link class="ui left floated button" to="/job/executing">{{$L('view executing jobs')}}</router-link>
       <button class="ui left floated icon button" v-on:click="refresh"><i class="refresh icon"></i></button>
       <div class="ui icon buttons">
+        <button class="ui left floated icon button" v-on:click="vcmd=!vcmd">{{$L('show cmd')}}</button>
         <button class="ui left floated icon button" v-on:click="batched=!batched">{{$L('batch')}}</button>
         <button class="ui button" :class="{disabled: batchIds.length == 0}" v-if="batched" v-on:click="batch('start')">
           <i class="play icon"></i>
@@ -43,7 +44,8 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(job, index) in jobs">
+        <template v-for="(job, index) in jobs">
+        <tr>
           <td class="center aligned">
             <div class="ui icon dropdown" v-show="!batched">
               <i class="content icon"></i>
@@ -74,6 +76,10 @@
             <a href="#" :title="$L('click to select a node and re-execute job')" v-on:click.prevent="showExecuteJobModal(job.name, job.group, job.id)"><i class="icon repeat"></i></a>
           </td>
         </tr>
+        <tr v-show="vcmd">
+            <td colspan="7">{{job.cmd}}}</td>
+        </tr>
+        </template>
       </tbody>
     </table>
     <ExecuteJob ref="executeJobModal"/>
@@ -90,6 +96,7 @@ export default {
   data: function(){
     return {
       batched: false,
+      vcmd: false,
       batchIds: [],
       groups: [],
       group: '',

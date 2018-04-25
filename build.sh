@@ -13,11 +13,11 @@ echo "build file to ./$out"
 
 mkdir -p "$out/conf"
 
-go build -o ./$out/cronnode ./bin/node/server.go
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./$out/cronnode ./bin/node/server.go
 check_code
-go build -o ./$out/cronweb ./bin/web/server.go
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./$out/cronweb ./bin/web/server.go
 check_code
-go build -o ./$out/csctl ./bin/csctl/cmd.go
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./$out/csctl ./bin/csctl/cmd.go
 check_code
 
 sources=`find ./conf/files -name "*.json.sample"`
