@@ -9,3 +9,8 @@ web/ui/dist
 .vscode
 *npm-debug.log
 vendor
+.idea/
+conf/files_bak/
+node_modules/
+package-lock.json
+web/ui/package-lock.json
