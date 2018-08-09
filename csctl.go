@@ -6,7 +6,7 @@ import (
 
 	client "github.com/coreos/etcd/clientv3"
 
-	"github.com/shunfei/cronsun/conf"
+	"github.com/yeer/cronsun/conf"
 )
 
 const (

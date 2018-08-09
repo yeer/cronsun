@@ -88,7 +88,7 @@ export default {
       ips: '',
       begin: '',
       end: '',
-      latest: false,
+      latest: '',
       failedOnly: '',
       list: [],
       total: 0,
@@ -101,8 +101,9 @@ export default {
       this.fetchList(this.buildQuery());
 
       var vm = this;
-      $(this.$refs.latest).checkbox({'onChange': ()=>{vm.latest = !vm.latest}});
-      $(this.$refs.failedOnly).checkbox({'onChange': ()=>{vm.failedOnly = !vm.failedOnly}});
+      $(this.$refs.latest).checkbox({'onChange': ()=>{console.log(vm.latest);}});
+      // $(this.$refs.failedOnly).checkbox({'onChange': ()=>{vm.failedOnly = !vm.failedOnly}});
+    $(this.$refs.failedOnly).checkbox({'onChange': ()=>{console.log(vm.failedOnly);}});
   },
 
   watch: {
@@ -122,6 +123,7 @@ export default {
       this.end = this.$route.query.end || '';
       this.page = this.$route.query.page || 1;
       this.latest = this.$route.query.latest == 'true' ? true : false;
+      console.log(this.latest);
       this.failedOnly = this.$route.query.failedOnly ? true : false;
     },
 
