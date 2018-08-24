@@ -122,7 +122,7 @@ func doRequest(message []byte) {
 		Timeout: timeout,
 	}
 
-	request, err := http.NewRequest("POST", "https://oapi.dingtalk.com/robot/send?access_token=9a097fadc5d56e6c6d9c65b7e0e025e19e6cb56d19e7c4fe74c1ed2798843a0d", strings.NewReader(string(message)))
+	request, err := http.NewRequest("POST", "https://oapi.dingtalk.com/robot/send?access_token=3c869d1b3da319a1b30a8474521d2d60c1b0bbf778fe3522e63f3a919efc03a8", strings.NewReader(string(message)))
 	request.Header.Add("Content-Type", "application/json; charset=utf-8")
 	response, err2 := client.Do(request)
 
