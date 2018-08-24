@@ -152,6 +152,8 @@ func GetJobLogList(query bson.M, page, size int, sort string) (list []*cronsun.J
 }
 
 func main() {
+	flag.Parse()
+
 	lcf := zap.NewDevelopmentConfig()
 	lcf.Level.SetLevel(zapcore.Level(*level))
 	lcf.Development = false
