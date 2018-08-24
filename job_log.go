@@ -32,6 +32,7 @@ type JobLog struct {
 	BeginTime time.Time     `bson:"beginTime" json:"beginTime"`       // 任务开始执行时间，精确到毫秒，索引
 	EndTime   time.Time     `bson:"endTime" json:"endTime"`           // 任务执行完毕时间，精确到毫秒
 	Cleanup   time.Time     `bson:"cleanup,omitempty" json:"-"`       // 日志清除时间标志
+	Report    bool          `bson:"report" json:"report"`             //是否发送报警
 }
 
 type JobLatestLog struct {
@@ -107,6 +108,7 @@ func CreateJobLog(j *Job, t time.Time, rs string, success bool) {
 
 		BeginTime: t,
 		EndTime:   et,
+		Report:    false,
 	}
 
 	if conf.Config.Web.LogCleaner.EveryMinute > 0 {

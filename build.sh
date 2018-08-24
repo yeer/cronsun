@@ -19,6 +19,8 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./$out/cronweb ./bin/web/serve
 check_code
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./$out/csctl ./bin/csctl/cmd.go
 check_code
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./$out/monitor ./bin/monitor/server.go
+check_code
 
 sources=`find ./conf/files -name "*.json.sample"`
 check_code
